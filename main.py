@@ -60,6 +60,18 @@ def prime_factors(n):
         factors.append(int(n))
     return factors
 
+def modular_pow(base, exponent, modulus):
+    result = 1
+    
+    while (exponent > 0):
+        if (exponent % 2 == 1):
+            result = (result * base) % modulus
+        
+        exponent = exponent >> 1
+        base = (base * base) % modulus
+    
+    return result
+
 def find_even_occurrence_group(store):
     keys = list(store.keys())
 
@@ -102,13 +114,44 @@ def chineseRemainderTheorem(a, m, b, n):
 
     return ((a * t * n) + (b * s * m)) % (m * n)
 
-def RSA():
-    # TODO
-    return
+def RSA(p, q):
+    phi = (p - 1) * (q - 1)
 
-def pollardRho():
-    # TODO
-    return
+    e = random.randint(1, phi) # Encryption exponent
+    while (extendedEuclidean(e, phi, False) != 1):
+        e = random.randint(1, phi)
+
+    d = diophantine(e, phi)[0] # Decryption exponent using diophantine equation (e * x) + (phi * y) = 1
+
+    return e, d
+
+def pollardRho(n, x_0):
+    
+    if (n == 1):
+        return n
+    
+    if (n % 2 == 0):
+        return 2
+    
+    x = x_0
+    y = x
+
+    d = 1
+
+    while (d == 1):
+        x = (modular_pow(x, 2, n) + 1) % n
+        
+        y = (modular_pow(y, 2, n) + 1) % n
+        y = (modular_pow(y, 2, n) + 1) % n
+
+        d = extendedEuclidean(abs(x - y), n, False)
+
+        if d == n:
+            return pollardRho(n, x_0 + 1)
+    
+    return d
+
+
 
 def indexCalculus():
     # TODO
@@ -206,6 +249,9 @@ def QKDAlice(n):
     isValid = False
     while (not isValid):
         response = input("Enter the bases you used to measure the photons (V or L): ")
+        if (len(response) != n):
+            print("Invalid input, please try again!")
+            continue
         for char in response:
             if (char != "V" and char != "L"):
                 print("Invalid input, please try again!")
@@ -229,26 +275,51 @@ def QKDBob():
 def main():
     
     ### Find the GCD of two numbers using the Extended Euclidean Algorithm
-    extEucl1, extEucl2 = 42823, 6409 
+    #extEucl1, extEucl2 = 42823, 6409 
     
-    print("The GCD of", extEucl1, "and", extEucl2, "is:", extendedEuclidean(extEucl1, extEucl2, True))
+    #print("The GCD of", extEucl1, "and", extEucl2, "is:", extendedEuclidean(extEucl1, extEucl2, True))
     ######################################################################
 
     ### Find a solution to the system x = a (mod n) and x = b (mod m) using Chinese Remainder Theorem
-    a, n = 7, 11 # x = a (mod n)
-    b, m = 3, 13 # x = b (mod m)
+    #a, n = 7, 11 # x = a (mod n)
+    #b, m = 3, 13 # x = b (mod m)
     
-    print("The solution to the system {x =", a, "( mod", n, "), x =", b, "( mod", m, ")} is: x =", chineseRemainderTheorem(a, n, b, m))
+    #print("The solution to the system {x =", a, "( mod", n, "), x =", b, "( mod", m, ")} is: x =", chineseRemainderTheorem(a, n, b, m))
     ######################################################################
 
     ### Find a factor of n using Quadratic Sieve
-    num = 21719
-    numFactors = 100 # Number of prime factorizations to find (don't set too high)
+    #num = 21719
+    #numFactors = 100 # Number of prime factorizations to find (don't set too high)
     
-    print(quadraticSieve(num, numFactors))
+    #print(quadraticSieve(num, numFactors))
     ######################################################################
 
-    QKDAlice(8)
+    ### Find a factor of n using Pollard's Rho Algorithm
+    #num = 2171917191919
+    #x_0 = 2 # Starting value for x
+
+    #print("A factor of", num, "is:", pollardRho(num, x_0))
+    ######################################################################
+
+    ### Have a message encrypted using RSA
+    p, q = 103333487, 299909459 # Two primes
+
+    n = p * q
+
+    e, d = RSA(p, q)
+
+    #assert((e * d) % n == 1)
+
+    message = random.randint(1, n)
+    c = modular_pow(message, e, n)
+
+    print("Your public key is: ( Encryption exponent:", e, ", modulus:", n, ")")
+    print("Your private key is: ( Decryption exponent:", d,")")
+    print("Encrypting the message '", message, "' using your public key...")
+    print("Your encrypted message is:", c)
+    print("To decrypt, use your decryption exponent")
+    print("Decrypted message:", modular_pow(c, d, n))
+
 
 
 main()
