@@ -46,7 +46,6 @@ def eulerPhi(n):
 
 def prime_factors(n):
     # Returns a list of prime factors of n
-    # https://stackoverflow.com/questions/15347174/python-finding-prime-factors
     i = 2
     factors = []
 
@@ -103,6 +102,32 @@ def extendedEuclidean(a, b, printSteps):
         print(a, " = ", str(x), " * ", str(b), " + ", str(y))
     return extendedEuclidean(b, y, printSteps)
 
+# Solves the diophantine equation ax + by = 1 using the Extended Euclidean Algorithm
+def diophantine(a, b):
+    x_a = 1
+    y_a = 0
+
+    x_b = 0
+    y_b = 1
+    
+    c = a % b
+
+    while (c != 0):
+        x_c = x_a - (int(a / b) * x_b)
+        y_c = y_a - (int(a / b) * y_b)
+
+        x_a = x_b
+        y_a = y_b
+
+        x_b = x_c
+        y_b = y_c
+        
+        a = b
+        b = c
+        c = a % b
+
+    return(x_c, y_c)
+
 # Chinese Remainder Theorem
 # Returns a solution to the system x = a (mod m) and x = b (mod n)
 def chineseRemainderTheorem(a, m, b, n):
@@ -151,12 +176,6 @@ def pollardRho(n, x_0):
     
     return d
 
-
-
-def indexCalculus():
-    # TODO
-    return
-
 # Quadratic Sieve
 # Returns two factors of n using the Quadratic Sieve algorithm
 # Successful Examples: 17155, 31861, 2201
@@ -195,6 +214,9 @@ def quadraticSieve(n, numFactors):
         return gcd, n / gcd
 
 def QKDAlice(n):
+
+    # L Basis: N = 0, E = 1
+    # V Basis: NW = 0, NE = 1
 
     photons = []
     bases = []
@@ -268,58 +290,136 @@ def QKDAlice(n):
 
     print("Your shared key is: ", key)
 
-def QKDBob():
-    # TODO
-    return
+def QKDBob(photons):
+    
+    bases = []
+    bits = []
+
+    for photon in photons:
+        rand = random.randint(0, 1)
+        if (rand <= 0.5):
+            bases.append("V")
+        else:
+            bases.append("L")
+
+    print("Bob measured using the following bases: ", bases)
+
+    storedResponse = ""
+
+    isValid = False
+    while (not isValid):
+        response = input("Enter the bases you used to measure the photons (V or L): ")
+        if (len(response) != len(photons)):
+            print("Invalid input, please try again!")
+            continue
+        for char in response:
+            if (char != "V" and char != "L"):
+                print("Invalid input, please try again!")
+                continue
+        isValid = True
+        storedResponse = response
+
+    print("Bob measured using the following bases: ", bases)
+
+    for i in range(0, len(photons)):
+        if (bases[i] == "V"):
+            if (photons[i] == "NW"):
+                bits.append(0)
+            elif (photons[i] == "NE"):
+                bits.append(1)
+            else:
+                rand = random.randint(0, 1)
+                if (rand <= 0.5):
+                    bits.append(0)
+                else:
+                    bits.append(1)
+        else:
+            if (photons[i] == "N"):
+                bits.append(0)
+            elif (photons[i] == "E"):
+                bits.append(1)
+            else:
+                rand = random.randint(0, 1)
+                if (rand <= 0.5):
+                    bits.append(0)
+                else:
+                    bits.append(1)
+
+    key = []
+
+    for i in range(0, len(storedResponse)):
+        if (storedResponse[i] == bases[i]):
+            key.append(bits[i])
+
+    print("Your shared key is: ", key)
+
 
 def main():
     
-    ### Find the GCD of two numbers using the Extended Euclidean Algorithm
-    #extEucl1, extEucl2 = 42823, 6409 
+    selection = input("Select an option:\n1. Quantum Key Distribution\n2. Extended Euclidean Algorithm\n3. Chinese Remainder Theorem\n4. Quadratic Sieve\n5. Pollard's Rho Algorithm\n6. RSA\n")
+
+    while (selection not in ["1", "2", "3", "4", "5", "6"]):
+        print("Invalid input, please try again!")
+        selection = input("Select an option:\n1. Quantum Key Distribution\n2. Extended Euclidean Algorithm\n3. Chinese Remainder Theorem\n4. Quadratic Sieve\n5. Pollard's Rho Algorithm\n6. RSA\n")
     
-    #print("The GCD of", extEucl1, "and", extEucl2, "is:", extendedEuclidean(extEucl1, extEucl2, True))
-    ######################################################################
+    if (selection == "1"):
+        who = input("Press 1 to play Alice or 2 to play Bob: ")
+        while (who not in ["1", "2"]):
+            print("Invalid input, please try again!")
+            who = input("Press 1 to play Alice or 2 to play Bob: ")
 
-    ### Find a solution to the system x = a (mod n) and x = b (mod m) using Chinese Remainder Theorem
-    #a, n = 7, 11 # x = a (mod n)
-    #b, m = 3, 13 # x = b (mod m)
+        if (who == "1"):
+            photons = ["N", "NW", "N", "N", "NE", "NW", "E", "E"] # Change this to edit the photons being sent to Bob
+            QKDBob(photons)
+        elif (who == "2"):
+            num = int(input("Enter the number of photons Alice should send you: "))
+            QKDAlice(num)
+
+    elif (selection == "2"):
+        ### Find the GCD of two numbers using the Extended Euclidean Algorithm
+        # 42823, 6409 
+        extEucl1 = int(input("Enter the first number: "))
+        extEucl2 = int(input("Enter the second number: "))
+        soln = diophantine(extEucl1, extEucl2)
+        print(extEucl1, "*", soln[0], "+", extEucl2, "*", soln[1], "= 1.")
+
+    elif (selection == "3"):
+        ### Find a solution to the system x = a (mod n) and x = b (mod m) using Chinese Remainder Theorem
+        a = int(input("Enter the first number: "))
+        n = int(input("Enter the first modulus: "))
+        b = int(input("Enter the second number: "))
+        m = int(input("Enter the second modulus: "))
+        print("The solution to the system {x =", a, "( mod", n, "), x =", b, "( mod", m, ")} is: x =", chineseRemainderTheorem(a, n, b, m))
+
+    elif (selection == "4"):
+        ### Find a factor of n using Quadratic Sieve
+        # 17155, 31861, 2201, 21719
+        num = int(input("Enter the number to factor: "))
+        numFactors = int(input("Enter the number of prime factorizations to find: "))
+        soln = quadraticSieve(num, numFactors)
+        if (soln is not None):
+            print(soln[0], "and", soln[1], "are factors of", num)
     
-    #print("The solution to the system {x =", a, "( mod", n, "), x =", b, "( mod", m, ")} is: x =", chineseRemainderTheorem(a, n, b, m))
-    ######################################################################
-
-    ### Find a factor of n using Quadratic Sieve
-    #num = 21719
-    #numFactors = 100 # Number of prime factorizations to find (don't set too high)
+    elif (selection == "5"):
+        ### Find a factor of n using Pollard's Rho Algorithm
+        num = int(input("Enter the number to factor: "))
+        x_0 = int(input("Enter the starting value for x: "))
+        print("A factor of", num, "is:", pollardRho(num, x_0))
     
-    #print(quadraticSieve(num, numFactors))
-    ######################################################################
-
-    ### Find a factor of n using Pollard's Rho Algorithm
-    #num = 2171917191919
-    #x_0 = 2 # Starting value for x
-
-    #print("A factor of", num, "is:", pollardRho(num, x_0))
-    ######################################################################
-
-    ### Have a message encrypted using RSA
-    p, q = 103333487, 299909459 # Two primes
-
-    n = p * q
-
-    e, d = RSA(p, q)
-
-    #assert((e * d) % n == 1)
-
-    message = random.randint(1, n)
-    c = modular_pow(message, e, n)
-
-    print("Your public key is: ( Encryption exponent:", e, ", modulus:", n, ")")
-    print("Your private key is: ( Decryption exponent:", d,")")
-    print("Encrypting the message '", message, "' using your public key...")
-    print("Your encrypted message is:", c)
-    print("To decrypt, use your decryption exponent")
-    print("Decrypted message:", modular_pow(c, d, n))
-
-
+    elif (selection == "6"):
+        ### Have a message encrypted using RSA
+        # 103333487, 299909459 # Two primes
+        p = int(input("Enter the first prime: "))
+        q = int(input("Enter the second prime: "))
+        e, d = RSA(p, q)
+        n = p * q
+        message = random.randint(1, n)
+        c = modular_pow(message, e, n)
+        print("Your public key is: ( Encryption exponent:", e, ", modulus:", p * q, ")")
+        print("Your private key is: ( Decryption exponent:", d)
+        print("Encrypting the message '", message, "' using your public key...")
+        print("Your encrypted message is:", c)
+        print("To decrypt, use your decryption exponent")
+        print("Decrypted message:", modular_pow(c, d, n))
 
 main()
